@@ -24,6 +24,9 @@ class Bunny650Commands(bunny1.Bunny1Commands):
         """Redirects to a Phabricator diff"""
         return 'https://phabricator.productinfrastructure.com/D' + arg
 
+    def D(self, arg):
+        return self.d(arg)
+
     def ios(self, arg):
         """Searches for Apple's iOS documentation on the given term"""
         apple_dev_url = 'https://developer.apple.com/library/ios'
