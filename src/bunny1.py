@@ -40,12 +40,12 @@ BUNNY1_HOME_URL = "http://www.bunny1.org/"
 
 # a list of commands that we shouldn't list as popular because
 # they sometimes get invoked behind the scenes but not usually
-# directly, and we want to avoid confusing users who look at the 
+# directly, and we want to avoid confusing users who look at the
 # list of most popular commands.
 DONT_LIST_AS_POPULAR = ("echo", "url", "_setpasswd")
 
 # a query stirng var that you can use instead of specifying your
-# command as the querystring.  this is useful when the user is 
+# command as the querystring.  this is useful when the user is
 # submitting forms.  we choose the triple underscore since no
 # commands can start with any more than two underscores.
 COMMAND_QUERY_STRING_VAR = "___"
@@ -69,6 +69,14 @@ class Bunny1(object):
         commands._b1 = self
         decorators._b1 = self
         self.commands = commands
+        self.matchable_commands = []
+        for command_name in dir(self.commands):
+            command = getattr(self.commands, command_name)
+            try:
+                if callable(command.matches):
+                    self.matchable_commands.append(command)
+            except AttributeError:
+                pass
         if decorators:
             self.decorators = decorators
         else:
@@ -178,7 +186,6 @@ class Bunny1(object):
         if method.startswith("__"):
             return self.error("commands can't start with a double underscore")
 
-
         try:
             try:
                 cmd = getattr(self.commands, method)
@@ -187,7 +194,14 @@ class Bunny1(object):
                 if not callable(cmd):
                     raise Fallback("method not callable")
             except AttributeError:
-                raise Fallback("no method")
+                for candidate_cmd in self.matchable_commands:
+                    match = candidate_cmd.matches(method)
+                    if match:
+                        cmd = candidate_cmd
+                        arg = (match['arg'] + ' ' + arg).rstrip()
+                        break
+                else:
+                    raise Fallback("no method")
 
 
             # check whether the user is authorized
@@ -377,7 +391,7 @@ class Bunny1Commands(object):
     h = history
 
     # since command history is only stored in memory and not persisted,
-    # history and popularity data won't be available when running 
+    # history and popularity data won't be available when running
     # in cgi mode.
 
     def popular(self, arg):
@@ -616,7 +630,7 @@ class PasswordProtectionCommands(object):
             next = " ".join(args[1:])
         else:
             next = None
-            
+
         save("b1passwd", passwd)
 
         if next:
@@ -717,5 +731,3 @@ def main_cgi(b1):
 # but it may be useful for testing in some rare cases
 if __name__ == "__main__":
     main(Bunny1(Bunny1Commands(), Bunny1Decorators()))
-
-
