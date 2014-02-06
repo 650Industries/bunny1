@@ -52,6 +52,10 @@ class Bunny650Commands(bunny1.Bunny1Commands):
         apple_dev_url = 'https://developer.apple.com/library/ios'
         return 'https://www.google.com/#q=' + qp(arg + ' site:' + apple_dev_url)
 
+    def npm(self, arg):
+        """Searches npm for modules with the given name"""
+        return 'https://npmjs.org/search?q=' + qp(arg)
+
 class Bunny650(bunny1.Bunny1):
     def __init__(self):
         bunny1.Bunny1.__init__(self, Bunny650Commands(), bunny1.Bunny1Decorators\
